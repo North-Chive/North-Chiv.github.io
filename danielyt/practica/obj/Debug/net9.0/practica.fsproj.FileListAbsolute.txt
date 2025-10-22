@@ -1,2 +1,0 @@
-c:\Users\Admin\dnf#\ejemplo2\danielyt\practica\obj\Debug\net9.0\practica.AssemblyInfoInputs.cache
-c:\Users\Admin\dnf#\ejemplo2\danielyt\practica\obj\Debug\net9.0\practica.AssemblyInfo.fs
