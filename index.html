@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>F# Master - Guía Interactiva</title>
+
+    <!-- Fuentes y iconos -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/themes/prism-okaidia.min.css" rel="stylesheet" />
+
+    <!-- Estilos base (se pueden mover a styles.css) -->
+    <style>
+        :root{
+            --bg:#0f1724;
+            --card:#0b1220;
+            --muted:#9aa4b2;
+            --accent:#6ee7b7;
+            --accent-2:#7dd3fc;
+            --soft:#111827;
+            --glass: rgba(255,255,255,0.03);
+            --radius:12px;
+        }
+        *{box-sizing:border-box}
+        body{
+            margin:0;
+            font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;
+            background: linear-gradient(180deg,#071029 0%, #071b2f 100%);
+            color:#e6eef6;
+            -webkit-font-smoothing:antialiased;
+            -moz-osx-font-smoothing:grayscale;
+            min-height:100vh;
+            transition:background .3s ease, color .2s ease;
+        }
+
+        /* Header */
+        .header{
+            position:fixed;
+            top:0;left:0;right:0;
+            background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+            backdrop-filter: blur(6px);
+            border-bottom:1px solid rgba(255,255,255,0.03);
+            z-index:40;
+        }
+        .header-content{
+            max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:12px;padding:14px;
+        }
+        .logo{display:flex;align-items:center;gap:10px}
+        .logo i{background:linear-gradient(90deg,var(--accent),var(--accent-2));-webkit-background-clip:text;background-clip:text;color:transparent;font-size:20px}
+        .logo h1{margin:0;font-size:18px}
+        .nav-main{display:flex;gap:12px;margin-left:20px}
+        .nav-link{color:var(--muted);text-decoration:none;padding:8px 10px;border-radius:8px;font-size:14px}
+        .nav-link.active, .nav-link:hover{background:var(--glass);color:var(--accent-2)}
+        .theme-toggle{margin-left:auto;background:transparent;border:0;color:var(--muted);cursor:pointer;padding:6px;border-radius:8px}
+        .sidebar-toggle{display:none}
+
+        /* Layout */
+        .sidebar{
+            position:fixed;left:14px;top:74px;width:260px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:16px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);
+            height:calc(100vh - 88px);overflow:auto;
+        }
+        .main-content{max-width:1100px;margin:100px auto 60px;padding:0 20px}
+        .hero{display:flex;gap:20px;align-items:stretch;background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);padding:20px;border-radius:12px;margin-bottom:20px}
+        .hero-content{display:flex;flex:1;gap:20px}
+        .hero-text{flex:1}
+        .hero-code{width:380px}
+        .code-window{background:var(--card);padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04)}
+        .window-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+        .window-controls{display:flex;gap:6px}
+        .control{width:10px;height:10px;border-radius:50%}
+        .red{background:#ff5f56}.yellow{background:#ffbd2e}.green{background:#27c93f}
+        pre.window-code{background:transparent;padding:10px;border-radius:8px;overflow:auto;margin:0;color:#dbeafe}
+
+        /* Sections and cards */
+        .section{margin-bottom:18px}
+        .section-title{display:flex;align-items:center;gap:10px;font-size:20px;margin-bottom:12px}
+        .concept-card{background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);padding:12px;border-radius:10px;margin-bottom:10px;border:1px solid rgba(255,255,255,0.02)}
+        .concept-header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+        .toggle-examples{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);padding:6px 10px;border-radius:8px;cursor:pointer}
+        .concept-content{margin-top:10px;display:none}
+        .concept-content.show{display:block}
+        .code-grid{display:flex;gap:10px;flex-wrap:wrap}
+        .code-block{flex:1;min-width:240px;background:var(--soft);padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.02)}
+        pre{margin:0;white-space:pre-wrap;word-break:break-word}
+
+        /* Small explanatory box */
+        .explain{background:rgba(255,255,255,0.02);padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);margin-top:8px;color:var(--muted);font-size:14px;line-height:1.4}
+        .explain b{color:var(--accent-2);}
+
+        /* Help modal */
+        .modal{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;z-index:60}
+        .modal.show{display:flex}
+        .modal-card{width:900px;max-width:95%;background:var(--card);border-radius:12px;padding:20px;border:1px solid rgba(255,255,255,0.04);color:inherit}
+        .modal-header{display:flex;align-items:center;justify-content:space-between}
+        .modal-body{margin-top:12px;max-height:60vh;overflow:auto}
+
+        /* Simulator */
+        .simulator{display:flex;gap:12px}
+        .simulator-panel{flex:1;background:var(--card);padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.03)}
+        .output-panel{width:420px;background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.03)}
+        .panel-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+        .panel-actions{margin-left:auto;display:flex;gap:8px}
+        .run-button,.clear-button{background:linear-gradient(90deg,var(--accent),var(--accent-2));border:0;padding:6px 10px;border-radius:8px;color:#042027;cursor:pointer}
+        .clear-button{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
+        #liveEditor{width:100%;height:240px;background:#020617;color:#dbeafe;border-radius:8px;padding:10px;border:1px solid rgba(255,255,255,0.04);font-family:monospace}
+
+        .output-area{height:240px;overflow:auto;background:#030618;border-radius:8px;padding:10px;border:1px solid rgba(255,255,255,0.03);color:#cbe7ff}
+
+        /* Quiz */
+        .quiz-container{background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03)}
+        .quiz-question{margin:12px 0}
+        .quiz-actions{display:flex;gap:8px;justify-content:flex-end}
+        .quiz-btn{padding:8px 12px;border-radius:8px;border:0;cursor:pointer}
+        .quiz-btn.primary{background:var(--accent);color:#022;box-shadow:0 6px 18px rgba(0,0,0,0.3)}
+        .quiz-btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.03);color:var(--muted)}
+        .progress-bar{height:8px;background:rgba(255,255,255,0.03);border-radius:999px;overflow:hidden;margin-bottom:6px}
+        .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-2));width:0%}
+
+        /* Small screens */
+        @media (max-width:980px){
+            .sidebar{display:none}
+            .sidebar-toggle{display:inline-block}
+            .hero{flex-direction:column}
+            .hero-code{width:100%}
+            .output-panel{width:100%}
+            .simulator{flex-direction:column}
+            .main-content{margin-top:90px}
+            .modal-card{width:95%}
+        }
+        /* Toggle dark class (for example) */
+        .light{background: #f6fbff;color:#071025}
+        .light .code-window, .light .concept-card, .light .simulator-panel, .light .output-panel{background:#ffffff;color:#071025}
+        .muted{text-transform:uppercase;font-size:11px;color:var(--muted)}
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div style="display:flex;align-items:center;gap:12px">
+                <button class="sidebar-toggle" id="sidebarToggle" title="Mostrar/ocultar contenido" style="background:transparent;border:0;color:var(--muted);font-size:18px"><i class="fas fa-bars"></i></button>
+                <div class="logo">
+                    <i class="fas fa-code"></i>
+                    <h1>F# Master</h1>
+                </div>
+            </div>
+
+            <nav class="nav-main">
+                <a href="#inicio" class="nav-link active">Inicio</a>
+                <a href="#conceptos" class="nav-link">Conceptos</a>
+                <a href="#ejercicios" class="nav-link">Ejercicios</a>
+                <a href="#simulador" class="nav-link">Simulador</a>
+                <a href="#quiz" class="nav-link">Quiz</a>
+            </nav>
+
+            <button class="theme-toggle" id="themeToggle" title="Cambiar tema">
+                <i class="fas fa-moon"></i>
+            </button>
+            <button title="Ayuda" onclick="openHelp()" style="margin-left:10px;background:transparent;border:0;color:var(--muted);cursor:pointer"><i class="fas fa-question-circle"></i></button>
+        </div>
+    </header>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-content">
+            <h3 style="display:flex;align-items:center;gap:8px"><i class="fas fa-book-open"></i> Contenido</h3>
+            <div class="sidebar-section">
+                <h4>Fundamentos</h4>
+                <a href="#variables" class="sidebar-link"> <i class="fas fa-font"></i> Variables y Funciones</a>
+                <a href="#listas" class="sidebar-link"> <i class="fas fa-list"></i> Listas y Secuencias</a>
+                <a href="#pattern" class="sidebar-link"> <i class="fas fa-puzzle-piece"></i> Pattern Matching</a>
+            </div>
+            <div class="sidebar-section">
+                <h4>Tipos Avanzados</h4>
+                <a href="#records" class="sidebar-link"> <i class="fas fa-database"></i> Records</a>
+                <a href="#unions" class="sidebar-link"> <i class="fas fa-sitemap"></i> Union Types</a>
+                <a href="#option" class="sidebar-link"> <i class="fas fa-question-circle"></i> Option Types</a>
+            </div>
+            <div class="sidebar-section">
+                <h4>Parcial</h4>
+                <a href="#pregunta1" class="sidebar-link"> <i class="fas fa-file-alt"></i> Pregunta I</a>
+                <a href="#pregunta2" class="sidebar-link"> <i class="fas fa-file-contract"></i> Pregunta II</a>
+            </div>
+            <div style="margin-top:12px;font-size:13px;color:var(--muted)">
+                <b>Recursos rápidos</b>
+                <ul style="padding-left:18px;margin:6px 0">
+                    <li><a href="https://fsharp.org/" target="_blank" style="color:var(--accent-2)">F# official</a></li>
+                    <li><a href="https://docs.microsoft.com/dotnet/fsharp/" target="_blank" style="color:var(--accent-2)">Microsoft Docs</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Hero Section -->
+        <section id="inicio" class="hero">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1>Domina F# para tu Parcial</h1>
+                    <p style="color:var(--muted)">Aprende los conceptos clave con ejemplos interactivos, ejercicios prácticos y simulaciones en tiempo real.</p>
+                    <div class="hero-stats" style="display:flex;gap:12px;margin-top:12px">
+                        <div class="stat" style="background:var(--glass);padding:10px;border-radius:8px">
+                            <span class="stat-number" id="conceptCount">8</span><br/><span class="stat-label muted">Conceptos</span>
+                        </div>
+                        <div class="stat" style="background:var(--glass);padding:10px;border-radius:8px">
+                            <span class="stat-number" id="exerciseCount">6</span><br/><span class="stat-label muted">Ejercicios</span>
+                        </div>
+                        <div class="stat" style="background:var(--glass);padding:10px;border-radius:8px">
+                            <span class="stat-number" id="codeCount">12</span><br/><span class="stat-label muted">Ejemplos</span>
+                        </div>
+                    </div>
+
+                    <div class="explain" style="margin-top:12px">
+                        <b>¿Qué encontrarás aquí?</b>
+                        <p>Explicaciones claras, ejemplos comentados y ejercicios interactivos para practicar F#. Cada sección incluye una descripción de <b>qué es</b>, <b>cómo funciona</b> y <b>cuándo usarlo</b>.</p>
+                    </div>
+                </div>
+                <div class="hero-code">
+                    <div class="code-window">
+                        <div class="window-header">
+                            <div class="window-controls">
+                                <span class="control red"></span>
+                                <span class="control yellow"></span>
+                                <span class="control green"></span>
+                            </div>
+                            <span class="window-title">demo.fsx</span>
+                        </div>
+                        <pre class="window-code"><code class="language-fsharp">// Ejemplo: imprimir impares (comentado)
+// Función que genera los n primeros impares y los imprime.
+let calcularImpares n =
+    [1..n]                       // lista de 1 a n
+    |> List.map (fun x -> 2*x-1) // map: transformar cada índice en un impar
+    |> List.iter (printfn "%d")  // iter: imprimir cada valor
+
+calcularImpares 5</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Conceptos Section -->
+        <section id="conceptos" class="section">
+            <h2 class="section-title">🎯 Conceptos Fundamentales</h2>
+
+            <!-- Variables y Funciones -->
+            <div id="variables" class="concept-card">
+                <div class="concept-header">
+                    <div style="display:flex;align-items:center;gap:10px">
+                        <i class="fas fa-font concept-icon"></i>
+                        <h3>Variables y Funciones</h3>
+                    </div>
+                    <button class="toggle-examples">Mostrar Ejemplos</button>
+                </div>
+                <div class="concept-content">
+                    <div class="explain">
+                        <b>Qué es:</b> En F# las variables son inmutables por defecto. Las funciones se definen con let.<br/>
+                        <b>Cómo funciona:</b> La inmutabilidad evita efectos secundarios y favorece programación funcional.<br/>
+                        <b>Cuándo usar:</b> Usa let para valores constantes y funciones puras; usa ref o mutable solo cuando realmente necesites estado.
+                    </div>
+
+                    <div class="code-grid" style="margin-top:10px">
+                        <div class="code-block">
+                            <h4>Variables Inmutables</h4>
+                            <pre><code class="language-fsharp">let nombre = "Juan"
+let edad = 25
+let pi = 3.1416
+
+// Por defecto no puedes reasignar: nombre <- "Pedro" dará error</code></pre>
+                        </div>
+                        <div class="code-block">
+                            <h4>Funciones Básicas</h4>
+                            <pre><code class="language-fsharp">let sumar a b = a + b
+let multiplicar x y = x * y
+
+let resultado = sumar 5 3
+printfn "5 + 3 = %d" resultado</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Listas y Secuencias -->
+            <div id="listas" class="concept-card">
+                <div class="concept-header">
+                    <div style="display:flex;align-items:center;gap:10px">
+                        <i class="fas fa-list concept-icon"></i>
+                        <h3>Listas y Secuencias</h3>
+                    </div>
+                    <button class="toggle-examples">Mostrar Ejemplos</button>
+                </div>
+                <div class="concept-content">
+                    <div class="explain">
+                        <b>Qué es:</b> Listas (List) son estructuras inmutables. Secuencias (Seq) son perezosas (evaluadas bajo demanda).<br/>
+                        <b>Cómo funciona:</b> Operadores como |> (pipe) y funciones de orden superior (map, filter) facilitan transformaciones. <br/>
+                        <b>Cuándo usar:</b> Usa List para colecciones pequeñas/medias y Seq para flujos o grandes datos perezosos.
+                    </div>
+
+                    <div class="interactive-demo" style="margin-top:8px">
+                        <div class="demo-controls" style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+                            <input type="number" id="listaInput" placeholder="Ingresa un número" value="5" style="padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit">
+                            <button onclick="generarLista()" class="run-button">Generar Lista</button>
+                            <button onclick="showListTip()" class="clear-button" title="Consejo">Consejo</button>
+                        </div>
+                        <div class="demo-output" id="listaOutput" style="padding:8px;border-radius:8px;background:#021026;color:#bfe7ff"></div>
+                        <div class="explain" style="margin-top:8px"><b>Nota:</b> El ejemplo genera los primeros n impares usando un mapeo simple. Ejemplos comentados ayudan a entender la transformación.</div>
+                    </div>
+
+                    <div class="code-grid" style="margin-top:8px">
+                        <div class="code-block">
+                            <h4>Operaciones Comunes</h4>
+                            <pre><code class="language-fsharp">let numeros = [1..10]
+let pares = numeros |> List.filter (fun x -> x % 2 = 0)
+let dobles = numeros |> List.map (fun x -> x * 2)
+let suma = numeros |> List.sum
+
+printfn "Pares: %A" pares</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pattern Matching -->
+            <div id="pattern" class="concept-card">
+                <div class="concept-header">
+                    <div style="display:flex;align-items:center;gap:10px">
+                        <i class="fas fa-puzzle-piece concept-icon"></i>
+                        <h3>Pattern Matching</h3>
+                    </div>
+                    <button class="toggle-examples">Mostrar Ejemplos</button>
+                </div>
+                <div class="concept-content">
+                    <div class="explain">
+                        <b>Qué es:</b> Pattern matching permite descomponer valores y actuar según su forma.<br/>
+                        <b>Cómo funciona:</b> Se combinan patrones literales, guards y binding para cubrir casos.<br/>
+                        <b>Cuándo usar:</b> Ideal para discriminated unions, manejo de errores y lógica condicional compleja.
+                    </div>
+
+                    <div class="pattern-visualizer" style="margin-top:8px">
+                        <div class="pattern-input" style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+                            <input type="number" id="patternInput" placeholder="Ingresa un número" value="5" style="padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit">
+                            <button onclick="evaluarPattern()" class="run-button">Evaluar</button>
+                        </div>
+                        <div class="pattern-result" id="patternResult" style="padding:8px;border-radius:8px;background:#021026;color:#bfe7ff"></div>
+                        <div class="explain" style="margin-top:8px"><b>Ejemplo:</b> usar match para clasificación hace el código más claro que múltiples if/else.</div>
+                    </div>
+
+                    <div class="code-grid" style="margin-top:8px">
+                        <div class="code-block">
+                            <h4>Match con Números</h4>
+                            <pre><code class="language-fsharp">let clasificarNumero n =
+    match n with
+    | 0 -> "Cero"
+    | 1 -> "Uno"
+    | x when x < 0 -> "Negativo"
+    | x when x % 2 = 0 -> "Par positivo"
+    | _ -> "Impar positivo"</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tipos Avanzados: breve guía (nuevas sub-secciones) -->
+            <div id="records" class="concept-card">
+                <div class="concept-header">
+                    <div style="display:flex;align-items:center;gap:10px">
+                        <i class="fas fa-database concept-icon"></i>
+                        <h3>Records</h3>
+                    </div>
+                    <button class="toggle-examples">Mostrar Ejemplos</button>
+                </div>
+                <div class="concept-content">
+                    <div class="explain"><b>Qué:</b> Records son tipos con campos nombrados. <b>Cuándo:</b> cuando necesitas agrupar datos relacionados (ej: país, capital, PIB).</div>
+                    <pre class="code-block"><code class="language-fsharp">type Pais = { Nombre: string; Capital: string; Pib: int }
+let colombia = { Nombre="Colombia"; Capital="Bogotá"; Pib=100 }</code></pre>
+                </div>
+            </div>
+
+            <div id="unions" class="concept-card">
+                <div class="concept-header">
+                    <div style="display:flex;align-items:center;gap:10px">
+                        <i class="fas fa-sitemap concept-icon"></i>
+                        <h3>Union Types</h3>
+                    </div>
+                    <button class="toggle-examples">Mostrar Ejemplos</button>
+                </div>
+                <div class="concept-content">
+                    <div class="explain"><b>Qué:</b> Union Types describen un valor que puede tomar varias formas. <b>Cuándo:</b> cuando un dato puede ser de distintos "casos".</div>
+                    <pre class="code-block"><code class="language-fsharp">type Resultado<'T> = Ok of 'T | Error of string
+let r1 = Ok 42
+let r2 = Error "No encontrado"</code></pre>
+                </div>
+            </div>
+
+            <div id="option" class="concept-card">
+                <div class="concept-header">
+                    <div style="display:flex;align-items:center;gap:10px">
+                        <i class="fas fa-question-circle concept-icon"></i>
+                        <h3>Option Types</h3>
+                    </div>
+                    <button class="toggle-examples">Mostrar Ejemplos</button>
+                </div>
+                <div class="concept-content">
+                    <div class="explain"><b>Qué:</b> Option representa un valor que puede o no existir (Some/None). <b>Cuándo:</b> evita nulls y hace explícita la ausencia de valor.</div>
+                    <pre class="code-block"><code class="language-fsharp">let buscaClave key map =
+    match Map.tryFind key map with
+    | Some v -> printfn "Encontrado: %A" v
+    | None -> printfn "No existe"</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Nuevo apartado: Ejercicio Integrador (todo lo que se enseña) -->
+        <section id="ejercicios" class="section">
+            <h2 class="section-title">🧩 Ejercicio Integrador — Segundo Parcial (Todo en uno)</h2>
+
+            <div class="concept-card">
+                <div class="explain">
+                    <b>Descripción:</b> Este ejercicio reúne variables/funciones, listas/secuencias, pattern matching, records y uso de Option.
+                    Usa los botones para cargar el código en el simulador o copiarlo al portapapeles. Ejecuta en tu entorno F# (.fsx / dotnet fsi) para resultados reales.
+                </div>
+
+                <div style="display:flex;gap:8px;margin-top:10px">
+                    <button class="run-button" onclick="loadExerciseToSimulator()">Cargar en simulador</button>
+                    <button class="clear-button" onclick="copyExerciseCode()">Copiar código</button>
+                </div>
+
+                <div style="margin-top:12px">
+                    <h4>Código F# (ejercicio completo)</h4>
+                    <pre><code class="language-fsharp" id="exerciseCode">// Segundo Parcial Programacion I
+open System
+
+// ----------------
+// Pregunta I
+// ----------------
+
+// 1.a - Secuencia de impares usando listas
+let imprimirImpares n =
+    [1..n]                    // lista de 1..n
+    |> List.map (fun e -> 2*e - 1)  // transformar a impares
+    |> List.iter Console.WriteLine   // imprimir cada impar
+
+// 1.b - Ordenar base de datos de países por PIB y mostrar nombres
+let atlas = [
+    ("Colombia","Bogotá",100)
+    ("USA", "Whashington DC", 10000)
+    ("Francia", "Paris", 4000)
+    ("Japon", "Tokyo", 8000)
+]
+
+let mostrarListaOrdenada lista =
+    lista
+    |> List.sortBy (fun (_,_,pib) -> pib)   // ordenar por PIB ascendente
+    |> List.iter (fun (nombre,_,_) -> printfn "%s" nombre)
+
+// Ejecutar ejemplos de la Pregunta I
+printfn "Impares (n=5):"
+imprimirImpares 5
+
+printfn "\nPaises ordenados por PIB (asc):"
+atlas |> mostrarListaOrdenada
+
+// 1.c - Base de datos de cuentas bancarias usando records y discriminated union para moneda
+type Moneda =
+    | Euros
+    | Pesos
+    | Dolares
+
+type Cuenta = {
+    Banco: string
+    Moneda: Moneda
+    Saldo: decimal
+}
+
+let bancos = [
+    { Banco = "Bancolombia"; Moneda = Pesos; Saldo = 4_000_000_000m }
+    { Banco = "JP Morgan";    Moneda = Dolares; Saldo = 850_000m }
+    { Banco = "UBS";          Moneda = Euros;   Saldo = 750_000m }
+]
+
+// ----------------
+// Pregunta II
+// ----------------
+
+// Conversión de monedas (tasas ejemplo)
+let convertirADolares moneda valor =
+    match moneda with
+    | Dolares -> valor
+    | Pesos   -> valor / 4_000m          // 1 USD = 4000 Pesos
+    | Euros   -> valor * 1.18m           // 1 EUR = 1.18 USD
+
+// 2.a - Listar cuentas ordenadas por saldo equivalente en dólares (mayor a menor) y total
+let listarPorSaldoEnDolares cuentas =
+    cuentas
+    |> List.map (fun c -> (c, convertirADolares c.Moneda c.Saldo))
+    |> List.sortByDescending snd
+    |> List.iter (fun (c, equiv) -> printfn "%s - %M USD (equiv.)" c.Banco equiv)
+
+let totalEnDolares cuentas =
+    cuentas
+    |> List.sumBy (fun c -> convertirADolares c.Moneda c.Saldo)
+
+// Ejecutar 2.a
+printfn "\nCuentas ordenadas por saldo en USD (desc):"
+listarPorSaldoEnDolares bancos
+printfn "Total (USD): %M" (totalEnDolares bancos)
+
+// 2.b - Base de datos de amigos (Apodo opcional) con interacción simple por consola
+type Amigo = {
+    Nombre: string
+    Apellido: string
+    Apodo: string option
+}
+
+let leerLinea prompt =
+    printf "%s" prompt
+    Console.ReadLine()
+
+let obtenerDatosDeAmigo() =
+    let nombre = leerLinea "Entra el nombre: "
+    let apellido = leerLinea "Entra el apellido: "
+    let r = leerLinea "Entra el apodo (dejar vacío si no tiene): "
+    let apodo = if String.IsNullOrWhiteSpace r then None else Some r
+    { Nombre = nombre; Apellido = apellido; Apodo = apodo }
+
+let rec obtenerDatos lista =
+    let amigo = obtenerDatosDeAmigo()
+    let nuevaLista = amigo :: lista
+    let r = leerLinea "Quieres agregar otro amigo (s/n)? "
+    if r.Trim().ToLower() = "s" then obtenerDatos nuevaLista else List.rev nuevaLista
+
+let imprimirAmigos amigos =
+    printfn "\n%-15s %-15s %-20s" "Nombre" "Apellido" "Apodo"
+    printfn "%s" (String.replicate 50 "-")
+    amigos |> List.iter (fun a ->
+        let apodo = a.Apodo |> Option.defaultValue "No tiene"
+        printfn "%-15s %-15s %-20s" a.Nombre a.Apellido apodo)
+
+// Ejemplo de uso interactivo (descomentar para ejecutar en consola)
+// let amigos = obtenerDatos []
+// imprimirAmigos amigos
+
+// Fin del ejercicio integrador
+</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pregunta I del Parcial -->
+        <section id="pregunta1" class="section">
+            <h2 class="section-title">📝 Pregunta I - Parcial</h2>
+
+            <div class="exam-question">
+                <div class="question-header" style="display:flex;align-items:center;justify-content:space-between">
+                    <div style="display:flex;gap:12px;align-items:center">
+                        <span class="question-number">1.a</span>
+                        <h3>Secuencia de Números Impares</h3>
+                    </div>
+                    <div class="question-points">5 puntos</div>
+                </div>
+                <div class="question-content">
+                    <p>Crear una función que tome un parámetro n (int) e imprima una secuencia de n números impares empezando por 1.</p>
+
+                    <div class="solution-editor">
+                        <div class="editor-header" style="display:flex;justify-content:space-between;align-items:center">
+                            <span>Solución</span>
+                            <div style="display:flex;gap:8px">
+                                <button onclick="evaluarSolucion(1)" class="run-button">Probar Solución</button>
+                                <button onclick="autoFillSolucion1()" class="clear-button">Autocompletar</button>
+                            </div>
+                        </div>
+                        <textarea class="code-editor" id="solucion1" style="width:100%;height:120px;padding:10px;margin-top:8px;border-radius:8px;background:#020617;color:#dbeafe;border:1px solid rgba(255,255,255,0.04)">let imprimirImpares n =
+    // Tu código aquí
+</textarea>
+                        <div class="test-cases" style="margin-top:8px">
+                            <h4>Casos de Prueba:</h4>
+                            <div class="test-case" style="display:flex;justify-content:space-between;padding:6px 0">
+                                <span>n = 5</span>
+                                <span class="expected">1, 3, 5, 7, 9</span>
+                                <span class="test-result" id="test1-1"></span>
+                            </div>
+                            <div class="test-case" style="display:flex;justify-content:space-between;padding:6px 0">
+                                <span>n = 3</span>
+                                <span class="expected">1, 3, 5</span>
+                                <span class="test-result" id="test1-2"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="exam-question" style="margin-top:12px">
+                <div class="question-header" style="display:flex;align-items:center;justify-content:space-between">
+                    <div style="display:flex;gap:12px;align-items:center">
+                        <span class="question-number">1.b</span>
+                        <h3>Ordenar Base de Datos</h3>
+                    </div>
+                    <div class="question-points">10 puntos</div>
+                </div>
+                <div class="question-content">
+                    <p>Dada una base de datos de países, ordenar por PIB y mostrar solo los nombres.</p>
+
+                    <div class="solution-editor">
+                        <div class="editor-header" style="display:flex;justify-content:space-between;align-items:center">
+                            <span>Solución</span>
+                            <div style="display:flex;gap:8px">
+                                <button onclick="evaluarSolucion(2)" class="run-button">Probar Solución</button>
+                                <button onclick="autoFillSolucion2()" class="clear-button">Autocompletar</button>
+                            </div>
+                        </div>
+                        <textarea class="code-editor" id="solucion2" style="width:100%;height:120px;padding:10px;margin-top:8px;border-radius:8px;background:#020617;color:#dbeafe;border:1px solid rgba(255,255,255,0.04)">let atlas = [
+    ("Colombia", "Bogotá", 100)
+    ("USA", "Washington DC", 10000)
+    ("Francia", "Paris", 4000)
+    ("Japón", "Tokyo", 8000)
+]
+
+let mostrarListaOrdenada lista =
+    // Tu código aquí
+</textarea>
+                        <div class="explain" style="margin-top:8px"><b>Pista:</b> usa List.sortBy para ordenar por el campo PIB y luego List.map para extraer el nombre.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Simulador Avanzado -->
+        <section id="simulador" class="section">
+            <h2 class="section-title">⚡ Simulador F# Interactivo</h2>
+
+            <div class="simulator">
+                <div class="simulator-panel">
+                    <div class="panel-header">
+                        <i class="fas fa-play"></i>
+                        <span>F# Interactive</span>
+                        <div class="panel-actions">
+                            <button onclick="ejecutarCodigo()" class="run-button">
+                                <i class="fas fa-play-circle"></i> Ejecutar
+                            </button>
+                            <button onclick="limpiarConsola()" class="clear-button">
+                                <i class="fas fa-broom"></i> Limpiar
+                            </button>
+                        </div>
+                    </div>
+                    <div class="code-area">
+                        <textarea id="liveEditor" placeholder="Escribe tu código F# aquí..." style="font-family:monospace">// Bienvenido al simulador F#
+// Escribe tu código y presiona Ejecutar
+
+let ejemplo = 
+    [1..5] 
+    |> List.map (fun x -> x * 2)
+    |> List.filter (fun x -> x > 5)
+
+printfn "Resultado: %A" ejemplo</textarea>
+                    </div>
+                </div>
+
+                <div class="output-panel">
+                    <div class="panel-header">
+                        <i class="fas fa-terminal"></i>
+                        <span>Consola de Salida</span>
+                    </div>
+                    <div class="output-area" id="outputArea">
+                        <div class="welcome-message" style="display:flex;gap:8px;align-items:center;color:var(--muted)">
+                            <i class="fas fa-info-circle"></i>
+                            <span>Escribe código F# en el panel izquierdo y presiona Ejecutar</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quiz Section -->
+        <section id="quiz" class="section">
+            <h2 class="section-title">🎯 Quiz de Práctica</h2>
+
+            <div class="quiz-container">
+                <div class="quiz-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="quizProgress"></div>
+                    </div>
+                    <span id="quizCounter">Pregunta 1/5</span>
+                </div>
+
+                <div class="quiz-question" id="quizQuestion">
+                    <!-- Las preguntas se cargan dinámicamente -->
+                </div>
+
+                <div class="quiz-actions">
+                    <button onclick="anteriorPregunta()" class="quiz-btn secondary">
+                        <i class="fas fa-arrow-left"></i> Anterior
+                    </button>
+                    <button onclick="siguientePregunta()" class="quiz-btn primary">
+                        Siguiente <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Recursos y recomendaciones -->
+        <section class="section">
+            <h2 class="section-title">📚 Recursos y Buenas Prácticas</h2>
+            <div class="concept-card">
+                <div class="explain">
+                    <b>Consejos de estudio:</b>
+                    <ul style="margin:8px 0 0 18px;color:var(--muted)">
+                        <li>Practica con listas y pipes para entender transformaciones.</li>
+                        <li>Aprende a usar pattern matching para controlar flujo sin if/else extensos.</li>
+                        <li>Prefiere inmutabilidad y funciones puras; reduce bugs.</li>
+                        <li>Lee la documentación oficial y resuelve ejercicios pequeños cada día.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="modal-card" role="document">
+            <div class="modal-header">
+                <h3>Ayuda y explicación extendida</h3>
+                <button onclick="closeHelp()" style="background:transparent;border:0;color:var(--muted);cursor:pointer"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <h4>Cómo usar la guía</h4>
+                <p class="muted">Cada sección incluye: qué es, cómo funciona y cuándo usarlo. Usa los botones "Mostrar Ejemplos" para ver código y "Simulador" para probar ideas.</p>
+
+                <h4>Más información por tema</h4>
+                <ul>
+                    <li><b>Variables y Funciones:</b> aprende a escribir funciones puras. Evita manejar estado innecesario.</li>
+                    <li><b>Listas y Secuencias:</b> entiende cuándo usar evaluación perezosa (Seq) frente a listas estrictas (List).</li>
+                    <li><b>Pattern Matching:</b> reemplaza condicionales complejos por patrones legibles y mantenibles.</li>
+                </ul>
+
+                <h4>Recursos</h4>
+                <p>Enlaces rápidos: <a href="https://fsharp.org/" target="_blank">fsharp.org</a>, <a href="https://docs.microsoft.com/dotnet/fsharp/" target="_blank">Microsoft Docs</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Indicator -->
+    <div class="progress-indicator" style="position:fixed;right:12px;bottom:12px">
+        <div class="progress-dots" style="display:flex;gap:8px;background:var(--glass);padding:8px;border-radius:999px;border:1px solid rgba(255,255,255,0.03)">
+            <div class="progress-dot active" data-target="inicio" style="width:10px;height:10px;border-radius:50%;background:var(--accent)"></div>
+            <div class="progress-dot" data-target="conceptos" style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.04)"></div>
+            <div class="progress-dot" data-target="pregunta1" style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.04)"></div>
+            <div class="progress-dot" data-target="simulador" style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.04)"></div>
+            <div class="progress-dot" data-target="quiz" style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.04)"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/components/prism-fsharp.min.js"></script>
+
+    <!-- Script principal -->
+    <script>
+        // UI: toggles para ejemplos y sidebar
+        document.querySelectorAll('.toggle-examples').forEach(btn=>{
+            btn.addEventListener('click', ()=>{
+                const parent = btn.closest('.concept-card');
+                const content = parent.querySelector('.concept-content');
+                content.classList.toggle('show');
+                btn.textContent = content.classList.contains('show') ? 'Ocultar Ejemplos' : 'Mostrar Ejemplos';
+                Prism.highlightAll();
+            });
+        });
+
+        // Sidebar toggle (mobile)
+        const sidebar = document.getElementById('sidebar');
+        document.getElementById('sidebarToggle').addEventListener('click', ()=>{
+            sidebar.style.display = (sidebar.style.display === 'none' || sidebar.style.display === '') ? 'block' : 'none';
+        });
+
+        // Tema claro/oscuro simple
+        const themeToggle = document.getElementById('themeToggle');
+        themeToggle.addEventListener('click', ()=>{
+            document.body.classList.toggle('light');
+            const icon = themeToggle.querySelector('i');
+            icon.className = document.body.classList.contains('light') ? 'fas fa-sun' : 'fas fa-moon';
+        });
+
+        // Generar lista de impares (demo)
+        function generarLista(){
+            const n = parseInt(document.getElementById('listaInput').value) || 0;
+            const arr = Array.from({length:n}, (_,i)=>1 + 2*i);
+            document.getElementById('listaOutput').textContent = arr.join(', ');
+        }
+
+        function showListTip(){
+            alert('Consejo: [1..n] genera una lista del 1 al n. Usar List.map permite transformar índices a impares.');
+        }
+
+        // Evaluar pattern (simulación)
+        function evaluarPattern(){
+            const n = Number(document.getElementById('patternInput').value);
+            let res = '';
+            if (n === 0) res = 'Cero';
+            else if (n === 1) res = 'Uno';
+            else if (n < 0) res = 'Negativo';
+            else if (n % 2 === 0) res = 'Par positivo';
+            else res = 'Impar positivo';
+            document.getElementById('patternResult').textContent = res;
+        }
+
+        // Simulador: Ejecutar código (simulación muy básica)
+        function ejecutarCodigo(){
+            const code = document.getElementById('liveEditor').value;
+            const out = document.getElementById('outputArea');
+            const simulated = document.createElement('div');
+            simulated.style.marginBottom = '8px';
+            simulated.style.whiteSpace = 'pre-wrap';
+            // Simular printfn de "Resultado" o listas: extraer printfn simple
+            const match = code.match(/printfn\s+"([^"]+)"\s*([%Aadfsg]*)(.*)/);
+            if(code.includes('printfn') || code.includes('Resultado')){
+                simulated.textContent = 'Simulación de salida:\n' + (match ? '-> ' + match[1] : '-> Código enviado (simulación)');
+            } else {
+                simulated.textContent = 'Simulación:\n' + code.split('\n').slice(0,6).join('\n');
+            }
+            out.prepend(simulated);
+        }
+
+        function limpiarConsola(){
+            const out = document.getElementById('outputArea');
+            out.innerHTML = '';
+        }
+
+        // Autocompletar soluciones (proveer guía)
+        function autoFillSolucion1(){
+            const txt = `let imprimirImpares n =
+    [1..n]
+    |> List.map (fun x -> 2*x-1)
+    |> List.iter (fun v -> printf "%d" v)
+`;
+            document.getElementById('solucion1').value = txt;
+        }
+        function autoFillSolucion2(){
+            const txt = `let atlas = [
+    ("Colombia", "Bogotá", 100)
+    ("USA", "Washington DC", 10000)
+    ("Francia", "Paris", 4000)
+    ("Japón", "Tokyo", 8000)
+]
+
+let mostrarListaOrdenada lista =
+    lista
+    |> List.sortBy (fun (_,_,pib) -> pib)
+    |> List.map (fun (pais,_,_) -> pais)
+`;
+            document.getElementById('solucion2').value = txt;
+        }
+
+        // Evaluación sencilla de soluciones (simulación local)
+        function evaluarSolucion(id){
+            if(id === 1){
+                const code = document.getElementById('solucion1').value;
+                // Heurística: si contiene "2*x-1" o "[1..n]" considerar correcto
+                const ok = /2\s*\*\s*x\s*-\s*1|\[1\.\.n\]/.test(code) || code.includes('2*x-1') || code.includes('[1..n]');
+                document.getElementById('test1-1').textContent = ok ? '✅ Correcto' : '❌ Incorrecto';
+                document.getElementById('test1-2').textContent = ok ? '✅ Correcto' : '❌ Incorrecto';
+                if(!ok) alert('Revisa la función: busca usar [1..n] y transformar con 2*x-1.');
+            } else if (id === 2){
+                const code = document.getElementById('solucion2').value;
+                // Heurística: buscar sortBy y map para nombres
+                const ok = /sortBy|List\.sortBy/.test(code) && /List\.map|map/.test(code);
+                const result = ok ? '✅ Correcto (se ordenan por PIB y se seleccionan nombres)' : '❌ Incorrecto (asegúrate de usar sortBy y map)';
+                alert(result);
+            }
+        }
+
+        // --- NUEVAS FUNCIONES para el apartado del ejercicio integrador ---
+        function loadExerciseToSimulator(){
+            const codeEl = document.getElementById('exerciseCode');
+            if(!codeEl) return alert('No se encontró el bloque de código.');
+            const code = codeEl.textContent || codeEl.innerText;
+            const editor = document.getElementById('liveEditor');
+            if(!editor) return alert('No se encontró el simulador en la página.');
+            editor.value = code;
+            alert('Ejercicio cargado en el simulador. Presiona Ejecutar para simular salida.');
+        }
+
+        function copyExerciseCode(){
+            const codeEl = document.getElementById('exerciseCode');
+            if(!codeEl) return alert('No se encontró el bloque de código.');
+            const text = codeEl.textContent || codeEl.innerText;
+            if(navigator.clipboard){
+                navigator.clipboard.writeText(text).then(()=> alert('Código copiado al portapapeles.'));
+            } else {
+                // fallback
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                alert('Código copiado (fallback).');
+            }
+        }
+
+        // Quiz dinámico con explicación de respuestas
+        const quizQuestions = [
+            {q:'¿Cómo se declara una función en F#?', choices:['fun nombre -> ...','let nombre args = ...','function nombre(args)'], answer:1, explain:'En F# se usan "let" para declarar funciones: let f x = x + 1.'},
+            {q:'¿Qué devuelve List.length [1;2;3]?', choices:['2','3','4'], answer:1, explain:'List.length devuelve la cantidad de elementos: 3.'},
+            {q:'¿Cuál es la forma inmutable de asignar un valor?', choices:['let','var','set'], answer:0, explain:'let crea vinculaciones inmutables.'},
+            {q:'¿Qué operador se usa para componer funciones?', choices:['|>','<<','+'], answer:1, explain:'El operador << es composición; |> es pipe. Aquí la respuesta propone << como composición.'},
+            {q:'¿Cómo crear una lista del 1 al 5?', choices:['[1..5]','List.range 1 5','1..5'], answer:0, explain:'[1..5] crea una lista literal de 1 a 5.'}
+        ];
+        let quizIndex = 0;
+        const answers = new Array(quizQuestions.length).fill(null);
+
+        function loadQuestion(){
+            const container = document.getElementById('quizQuestion');
+            container.innerHTML = '';
+            const item = quizQuestions[quizIndex];
+            const qEl = document.createElement('div');
+            qEl.innerHTML = `<h3>${item.q}</h3>`;
+            item.choices.forEach((c,i)=>{
+                const btn = document.createElement('button');
+                btn.className = 'quiz-btn';
+                btn.style.display = 'block';
+                btn.style.margin = '8px 0';
+                btn.style.width = '100%';
+                btn.textContent = c;
+                btn.onclick = ()=>{ selectAnswer(i); };
+                if(answers[quizIndex] === i) btn.style.background = 'linear-gradient(90deg,var(--accent),var(--accent-2))';
+                qEl.appendChild(btn);
+            });
+            container.appendChild(qEl);
+            updateProgress();
+        }
+
+        function selectAnswer(choice){
+            answers[quizIndex] = choice;
+            loadQuestion();
+        }
+
+        function siguientePregunta(){
+            if(quizIndex < quizQuestions.length -1) quizIndex++;
+            else { mostrarResultadoQuiz(); return; }
+            loadQuestion();
+        }
+        function anteriorPregunta(){
+            if(quizIndex > 0) quizIndex--;
+            loadQuestion();
+        }
+        function updateProgress(){
+            const fill = document.getElementById('quizProgress');
+            const counter = document.getElementById('quizCounter');
+            fill.style.width = `${(quizIndex+1)/quizQuestions.length*100}%`;
+            counter.textContent = `Pregunta ${quizIndex+1}/${quizQuestions.length}`;
+        }
+
+        function mostrarResultadoQuiz(){
+            let score = 0;
+            const details = [];
+            answers.forEach((a,i)=>{ 
+                const correct = a === quizQuestions[i].answer;
+                if(correct) score++;
+                details.push({q: quizQuestions[i].q, your: a, correct: quizQuestions[i].answer, explain: quizQuestions[i].explain, choices: quizQuestions[i].choices});
+            });
+            const container = document.getElementById('quizQuestion');
+            container.innerHTML = '';
+            const res = document.createElement('div');
+            res.style.padding = '12px';
+            res.style.background = 'var(--card)';
+            res.style.borderRadius = '8px';
+            res.innerHTML = `<h3>Resultado: ${score} / ${quizQuestions.length}</h3><p>Debajo encuentras explicación por pregunta.</p>`;
+            details.forEach((d,idx)=>{
+                const block = document.createElement('div');
+                block.style.marginTop = '10px';
+                block.style.padding = '10px';
+                block.style.border = '1px solid rgba(255,255,255,0.03)';
+                block.style.borderRadius = '8px';
+                block.innerHTML = `<b>${idx+1}. ${d.q}</b><br/>
+                    Tu respuesta: ${d.your !== null ? d.choices[d.your] : '<i>No respondió</i>'}<br/>
+                    Respuesta correcta: ${d.choices[d.correct]}<br/>
+                    <div style="margin-top:6px;color:var(--muted)">${d.explain}</div>`;
+                res.appendChild(block);
+            });
+            container.appendChild(res);
+            document.getElementById('quizProgress').style.width = '100%';
+        }
+
+        // Help modal functions
+        function openHelp(){
+            const m = document.getElementById('helpModal');
+            m.classList.add('show');
+            m.setAttribute('aria-hidden','false');
+        }
+        function closeHelp(){
+            const m = document.getElementById('helpModal');
+            m.classList.remove('show');
+            m.setAttribute('aria-hidden','true');
+        }
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', ()=>{
+            generarLista();
+            evaluarPattern();
+            loadQuestion();
+            Prism.highlightAll();
+            // Scroll suave para enlaces
+            document.querySelectorAll('a.nav-link, .sidebar-link').forEach(a=>{
+                a.addEventListener('click', (e)=>{
+                    e.preventDefault();
+                    const target = document.querySelector(a.getAttribute('href'));
+                    if(target) target.scrollIntoView({behavior:'smooth', block:'start'});
+                    document.querySelectorAll('.nav-link').forEach(n=>n.classList.remove('active'));
+                    a.classList.add('active');
+                });
+            });
+            // Close modal with Esc
+            document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') closeHelp(); });
+        });
+    </script>
+</body>
+</html>
